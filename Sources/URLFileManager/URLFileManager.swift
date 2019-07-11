@@ -110,6 +110,10 @@ public extension URLFileManager {
         case none
         case file
         case directory
+        
+        public var exists: Bool {
+            self != .none
+        }
     }
     
     func fileExistance(at url: URL) -> FileExistance {
