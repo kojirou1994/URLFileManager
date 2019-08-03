@@ -8,16 +8,66 @@ public final class URLFileManager {
         self.fm = fileManager ?? FileManager.default
     }
     
+    public static let `default` = URLFileManager()
+    
 }
 
 // MARK: Accessing User Directories
 public extension URLFileManager {
+    
+    #if os(macOS)
+    @available(OSX 10.12, *)
+    var homeDirectoryForCurrentUser: URL {
+        fm.homeDirectoryForCurrentUser
+    }
+    
+    @available(OSX 10.12, *)
+    func homeDirectory(forUser userName: String) -> URL? {
+        fm.homeDirectory(forUser: userName)
+    }
+    #endif
+    
+    @available(tvOS 10.0, *)
+    @available(watchOS 3.0, *)
+    @available(iOS 10.0, *)
+    @available(OSX 10.12, *)
+    var temporaryDirectory: URL {
+        fm.temporaryDirectory
+    }
+    
 }
+
 // MARK: Locating System Directories
 public extension URLFileManager {
+    
+    typealias SearchPathDirectory = FileManager.SearchPathDirectory
+    
+    typealias SearchPathDomainMask = FileManager.SearchPathDomainMask
+    
+    @available(OSX 10.6, *)
+    func url(for directory: SearchPathDirectory, in domain: SearchPathDomainMask, appropriateFor url: URL?, create shouldCreate: Bool) throws -> URL {
+        try fm.url(for: directory, in: domain, appropriateFor: url, create: shouldCreate)
+    }
+    
+    @available(OSX 10.6, *)
+    func urls(for directory: SearchPathDirectory, in domainMask: SearchPathDomainMask) -> [URL] {
+        fm.urls(for: directory, in: domainMask)
+    }
+    
+//    func NSSearchPathForDirectoriesInDomains(_ directory: FileManager.SearchPathDirectory, _ domainMask: FileManager.SearchPathDomainMask, _ expandTilde: Bool) -> [String]
+    
+//    func NSOpenStepRootDirectory() -> String
+    
+    
 }
 // MARK: Locating Application Group Container Directories
 public extension URLFileManager {
+    
+    @available(OSX 10.8, *)
+    func containerURL(forSecurityApplicationGroupIdentifier groupIdentifier: String) -> URL? {
+        fm.containerURL(forSecurityApplicationGroupIdentifier: groupIdentifier)
+    }
+    
 }
 
 // MARK: Discovering Directory Contents
@@ -29,10 +79,12 @@ public extension URLFileManager {
     
     typealias VolumeEnumerationOptions = FileManager.VolumeEnumerationOptions
     
+    @available(OSX 10.6, *)
     func contentsOfDirectory(at url: URL, includingPropertiesForKeys keys: [URLResourceKey]? = nil, options mask: DirectoryEnumerationOptions = []) throws -> [URL] {
         try fm.contentsOfDirectory(at: url, includingPropertiesForKeys: keys, options: mask)
     }
     
+    @available(OSX 10.6, *)
     func enumerator(at url: URL, includingPropertiesForKeys keys: [URLResourceKey]? = nil, options mask: DirectoryEnumerationOptions = [], errorHandler handler: ((URL, Error) -> Bool)? = nil) -> DirectoryEnumerator? {
         fm.enumerator(at: url, includingPropertiesForKeys: keys, options: mask, errorHandler: handler)
     }
@@ -62,6 +114,9 @@ public extension URLFileManager {
         try fm.removeItem(at: url)
     }
     
+    @available(iOS 11.0, *)
+    @available(watchOS, unavailable)
+    @available(tvOS, unavailable)
     func trashItem(at url: URL) throws {
         try fm.trashItem(at: url, resultingItemURL: nil)
     }
@@ -76,6 +131,7 @@ public extension URLFileManager {
     func replaceItemAt(_ originalItemURL: URL, withItemAt newItemURL: URL, backupItemName: String? = nil, options: ItemReplacementOptions = []) throws -> URL? {
         try fm.replaceItemAt(originalItemURL, withItemAt: newItemURL, backupItemName: backupItemName, options: options)
     }
+    
 }
 
 // MARK: Moving and Copying Items
@@ -93,14 +149,65 @@ public extension URLFileManager {
 
 // MARK: Managing iCloud-Based Items
 public extension URLFileManager {
+    
+    var ubiquityIdentityToken: (NSCoding & NSCopying & NSObjectProtocol)? {
+        fm.ubiquityIdentityToken
+    }
+    
+    func url(forUbiquityContainerIdentifier containerIdentifier: String?) -> URL? {
+        fm.url(forUbiquityContainerIdentifier: containerIdentifier)
+    }
+    
+    func isUbiquitousItem(at url: URL) -> Bool {
+        fm.isUbiquitousItem(at: url)
+    }
+    
+    func setUbiquitous(_ flag: Bool, itemAt url: URL, destinationURL: URL) throws {
+        try fm.setUbiquitous(flag, itemAt: url, destinationURL: destinationURL)
+    }
+    
+    func startDownloadingUbiquitousItem(at url: URL) throws {
+        try fm.startDownloadingUbiquitousItem(at: url)
+    }
+    
+    func evictUbiquitousItem(at url: URL) throws {
+        try fm.evictUbiquitousItem(at: url)
+    }
+    
+    func url(forPublishingUbiquitousItemAt url: URL, expiration outDate: AutoreleasingUnsafeMutablePointer<NSDate?>?) throws -> URL {
+        try fm.url(forPublishingUbiquitousItemAt: url, expiration: outDate)
+    }
+    
 }
 
 // MARK: Accessing File Provider Services
 public extension URLFileManager {
+    
+    #if os(macOS) || os(iOS)
+    @available(iOS 11.0, *)
+    @available(OSX 10.13, *)
+    func getFileProviderServicesForItem(at url: URL, completionHandler: @escaping ([NSFileProviderServiceName : NSFileProviderService]?, Error?) -> Void) {
+        fm.getFileProviderServicesForItem(at: url, completionHandler: completionHandler)
+    }
+    #endif
+    
 }
 
 // MARK: Creating Symbolic and Hard Links
 public extension URLFileManager {
+    
+    func createSymbolicLink(at url: URL, withDestinationURL destURL: URL) throws {
+        try fm.createSymbolicLink(at: url, withDestinationURL: destURL)
+    }
+    
+    func linkItem(at srcURL: URL, to dstURL: URL) throws {
+        try fm.linkItem(at: srcURL, to: dstURL)
+    }
+    
+    func destinationOfSymbolicLink(at url: URL) throws -> String {
+        try fm.destinationOfSymbolicLink(atPath: url.path)
+    }
+    
 }
 
 // MARK: Determining Access to Files
@@ -231,6 +338,7 @@ public extension URLFileManager {
     
 }
 
+#if os(macOS)
 // MARK: Unmounting Volumes
 @available(OSX 10.11, *)
 public extension URLFileManager {
@@ -242,9 +350,4 @@ public extension URLFileManager {
     }
     
 }
-
-
-
-// MARK:
-public extension URLFileManager {
-}
+#endif

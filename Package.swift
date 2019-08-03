@@ -14,8 +14,8 @@ let package = Package(
         .target(
             name: "URLFileManager",
             dependencies: []),
-        .testTarget(
-            name: "URLFileManagerTests",
-            dependencies: ["URLFileManager"]),
+//        .testTarget(
+//            name: "URLFileManagerTests",
+//            dependencies: ["URLFileManager"]),
     ]
 )
