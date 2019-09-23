@@ -60,7 +60,9 @@ public extension URLFileManager {
     
     
 }
+
 // MARK: Locating Application Group Container Directories
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
 public extension URLFileManager {
     
     @available(OSX 10.8, *)
@@ -69,6 +71,7 @@ public extension URLFileManager {
     }
     
 }
+#endif
 
 // MARK: Discovering Directory Contents
 public extension URLFileManager {
@@ -114,12 +117,12 @@ public extension URLFileManager {
         try fm.removeItem(at: url)
     }
     
+    #if os(macOS) || os(iOS)
     @available(iOS 11.0, *)
-    @available(watchOS, unavailable)
-    @available(tvOS, unavailable)
     func trashItem(at url: URL) throws {
         try fm.trashItem(at: url, resultingItemURL: nil)
     }
+    #endif
     
 }
 
@@ -148,6 +151,7 @@ public extension URLFileManager {
 }
 
 // MARK: Managing iCloud-Based Items
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
 public extension URLFileManager {
     
     var ubiquityIdentityToken: (NSCoding & NSCopying & NSObjectProtocol)? {
@@ -179,6 +183,7 @@ public extension URLFileManager {
     }
     
 }
+#endif
 
 // MARK: Accessing File Provider Services
 public extension URLFileManager {
