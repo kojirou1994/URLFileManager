@@ -1,11 +1,12 @@
 import Foundation
 
 public final class URLFileManager {
-    
-    private let fm: FileManager
-    
+
+    public let fileManager: FileManager
+
+    @inlinable
     public init(_ fileManager: FileManager? = nil) {
-        self.fm = fileManager ?? FileManager.default
+        self.fileManager = fileManager ?? FileManager.default
     }
     
     public static let `default` = URLFileManager()
@@ -16,42 +17,42 @@ public final class URLFileManager {
 public extension URLFileManager {
     
     #if os(macOS)
-    @available(OSX 10.12, *)
+    @inlinable
+    @available(macOS 10.12, *)
     var homeDirectoryForCurrentUser: URL {
-        fm.homeDirectoryForCurrentUser
+        fileManager.homeDirectoryForCurrentUser
     }
-    
-    @available(OSX 10.12, *)
+
+    @inlinable
+    @available(macOS 10.12, *)
     func homeDirectory(forUser userName: String) -> URL? {
-        fm.homeDirectory(forUser: userName)
+        fileManager.homeDirectory(forUser: userName)
     }
     #endif
-    
-    @available(tvOS 10.0, *)
-    @available(watchOS 3.0, *)
-    @available(iOS 10.0, *)
-    @available(OSX 10.12, *)
+
+    @inlinable
+    @available(tvOS 10.0, watchOS 3.0, iOS 10.0, macOS 10.12, *)
     var temporaryDirectory: URL {
-        fm.temporaryDirectory
+        fileManager.temporaryDirectory
     }
     
 }
 
 // MARK: Locating System Directories
 public extension URLFileManager {
-    
+
     typealias SearchPathDirectory = FileManager.SearchPathDirectory
-    
+
     typealias SearchPathDomainMask = FileManager.SearchPathDomainMask
-    
-    @available(OSX 10.6, *)
+
+    @inlinable
     func url(for directory: SearchPathDirectory, in domain: SearchPathDomainMask, appropriateFor url: URL?, create shouldCreate: Bool) throws -> URL {
-        try fm.url(for: directory, in: domain, appropriateFor: url, create: shouldCreate)
+        try fileManager.url(for: directory, in: domain, appropriateFor: url, create: shouldCreate)
     }
-    
-    @available(OSX 10.6, *)
+
+    @inlinable
     func urls(for directory: SearchPathDirectory, in domainMask: SearchPathDomainMask) -> [URL] {
-        fm.urls(for: directory, in: domainMask)
+        fileManager.urls(for: directory, in: domainMask)
     }
     
 //    func NSSearchPathForDirectoriesInDomains(_ directory: FileManager.SearchPathDirectory, _ domainMask: FileManager.SearchPathDomainMask, _ expandTilde: Bool) -> [String]
@@ -64,10 +65,10 @@ public extension URLFileManager {
 // MARK: Locating Application Group Container Directories
 #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
 public extension URLFileManager {
-    
-    @available(OSX 10.8, *)
+
+    @inlinable
     func containerURL(forSecurityApplicationGroupIdentifier groupIdentifier: String) -> URL? {
-        fm.containerURL(forSecurityApplicationGroupIdentifier: groupIdentifier)
+        fileManager.containerURL(forSecurityApplicationGroupIdentifier: groupIdentifier)
     }
     
 }
@@ -81,46 +82,52 @@ public extension URLFileManager {
     typealias DirectoryEnumerator = FileManager.DirectoryEnumerator
     
     typealias VolumeEnumerationOptions = FileManager.VolumeEnumerationOptions
-    
-    @available(OSX 10.6, *)
+
+    @inlinable
     func contentsOfDirectory(at url: URL, includingPropertiesForKeys keys: [URLResourceKey]? = nil, options mask: DirectoryEnumerationOptions = []) throws -> [URL] {
-        try fm.contentsOfDirectory(at: url, includingPropertiesForKeys: keys, options: mask)
+        try fileManager.contentsOfDirectory(at: url, includingPropertiesForKeys: keys, options: mask)
     }
     
-    @available(OSX 10.6, *)
+    @inlinable
     func enumerator(at url: URL, includingPropertiesForKeys keys: [URLResourceKey]? = nil, options mask: DirectoryEnumerationOptions = [], errorHandler handler: ((URL, Error) -> Bool)? = nil) -> DirectoryEnumerator? {
-        fm.enumerator(at: url, includingPropertiesForKeys: keys, options: mask, errorHandler: handler)
+        fileManager.enumerator(at: url, includingPropertiesForKeys: keys, options: mask, errorHandler: handler)
     }
-    
+
+    @inlinable
     func mountedVolumeURLs(includingResourceValuesForKeys propertyKeys: [URLResourceKey]? = nil, options: VolumeEnumerationOptions = []) -> [URL]? {
-        fm.mountedVolumeURLs(includingResourceValuesForKeys: propertyKeys, options: options)
+        fileManager.mountedVolumeURLs(includingResourceValuesForKeys: propertyKeys, options: options)
     }
-    
+
+    @inlinable
     func subpathsOfDirectory(atURL url: URL) throws -> [String] {
-        try fm.subpathsOfDirectory(atPath: url.path)
+        try fileManager.subpathsOfDirectory(atPath: url.path)
     }
     
 }
 
 // MARK: Creating and Deleting Items
 public extension URLFileManager {
-    
+
+    @inlinable
     func createDirectory(at url: URL, withIntermediateDirectories: Bool = true, attributes: [FileAttributeKey : Any]? = nil) throws {
-        try fm.createDirectory(at: url, withIntermediateDirectories: withIntermediateDirectories, attributes: attributes)
+        try fileManager.createDirectory(at: url, withIntermediateDirectories: withIntermediateDirectories, attributes: attributes)
     }
-    
+
+    @inlinable
     func createFile(at url: URL, contents data: Data? = nil, attributes attr: [FileAttributeKey : Any]? = nil) -> Bool {
-        fm.createFile(atPath: url.path, contents: data, attributes: attr)
+        fileManager.createFile(atPath: url.path, contents: data, attributes: attr)
     }
-    
+
+    @inlinable
     func removeItem(at url: URL) throws {
-        try fm.removeItem(at: url)
+        try fileManager.removeItem(at: url)
     }
     
     #if os(macOS) || os(iOS)
+    @inlinable
     @available(iOS 11.0, *)
     func trashItem(at url: URL) throws {
-        try fm.trashItem(at: url, resultingItemURL: nil)
+        try fileManager.trashItem(at: url, resultingItemURL: nil)
     }
     #endif
     
@@ -132,20 +139,22 @@ public extension URLFileManager {
     typealias ItemReplacementOptions = FileManager.ItemReplacementOptions
     
     func replaceItemAt(_ originalItemURL: URL, withItemAt newItemURL: URL, backupItemName: String? = nil, options: ItemReplacementOptions = []) throws -> URL? {
-        try fm.replaceItemAt(originalItemURL, withItemAt: newItemURL, backupItemName: backupItemName, options: options)
+        try fileManager.replaceItemAt(originalItemURL, withItemAt: newItemURL, backupItemName: backupItemName, options: options)
     }
     
 }
 
 // MARK: Moving and Copying Items
 public extension URLFileManager {
-    
+
+    @inlinable
     func copyItem(at srcURL: URL, to dstURL: URL) throws {
-        try fm.copyItem(at: srcURL, to: dstURL)
+        try fileManager.copyItem(at: srcURL, to: dstURL)
     }
-    
+
+    @inlinable
     func moveItem(at srcURL: URL, to dstURL: URL) throws {
-        try fm.moveItem(at: srcURL, to: dstURL)
+        try fileManager.moveItem(at: srcURL, to: dstURL)
     }
     
 }
@@ -153,33 +162,40 @@ public extension URLFileManager {
 // MARK: Managing iCloud-Based Items
 #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
 public extension URLFileManager {
-    
+
+    @inlinable
     var ubiquityIdentityToken: (NSCoding & NSCopying & NSObjectProtocol)? {
-        fm.ubiquityIdentityToken
+        fileManager.ubiquityIdentityToken
     }
-    
+
+    @inlinable
     func url(forUbiquityContainerIdentifier containerIdentifier: String?) -> URL? {
-        fm.url(forUbiquityContainerIdentifier: containerIdentifier)
+        fileManager.url(forUbiquityContainerIdentifier: containerIdentifier)
     }
-    
+
+    @inlinable
     func isUbiquitousItem(at url: URL) -> Bool {
-        fm.isUbiquitousItem(at: url)
+        fileManager.isUbiquitousItem(at: url)
     }
-    
+
+    @inlinable
     func setUbiquitous(_ flag: Bool, itemAt url: URL, destinationURL: URL) throws {
-        try fm.setUbiquitous(flag, itemAt: url, destinationURL: destinationURL)
+        try fileManager.setUbiquitous(flag, itemAt: url, destinationURL: destinationURL)
     }
-    
+
+    @inlinable
     func startDownloadingUbiquitousItem(at url: URL) throws {
-        try fm.startDownloadingUbiquitousItem(at: url)
+        try fileManager.startDownloadingUbiquitousItem(at: url)
     }
-    
+
+    @inlinable
     func evictUbiquitousItem(at url: URL) throws {
-        try fm.evictUbiquitousItem(at: url)
+        try fileManager.evictUbiquitousItem(at: url)
     }
-    
+
+    @inlinable
     func url(forPublishingUbiquitousItemAt url: URL, expiration outDate: AutoreleasingUnsafeMutablePointer<NSDate?>?) throws -> URL {
-        try fm.url(forPublishingUbiquitousItemAt: url, expiration: outDate)
+        try fileManager.url(forPublishingUbiquitousItemAt: url, expiration: outDate)
     }
     
 }
@@ -189,10 +205,10 @@ public extension URLFileManager {
 public extension URLFileManager {
     
     #if os(macOS) || os(iOS)
-    @available(iOS 11.0, *)
-    @available(OSX 10.13, *)
+    @inlinable
+    @available(iOS 11.0, macOS 10.13, *)
     func getFileProviderServicesForItem(at url: URL, completionHandler: @escaping ([NSFileProviderServiceName : NSFileProviderService]?, Error?) -> Void) {
-        fm.getFileProviderServicesForItem(at: url, completionHandler: completionHandler)
+        fileManager.getFileProviderServicesForItem(at: url, completionHandler: completionHandler)
     }
     #endif
     
@@ -200,17 +216,20 @@ public extension URLFileManager {
 
 // MARK: Creating Symbolic and Hard Links
 public extension URLFileManager {
-    
+
+    @inlinable
     func createSymbolicLink(at url: URL, withDestinationURL destURL: URL) throws {
-        try fm.createSymbolicLink(at: url, withDestinationURL: destURL)
+        try fileManager.createSymbolicLink(at: url, withDestinationURL: destURL)
     }
-    
+
+    @inlinable
     func linkItem(at srcURL: URL, to dstURL: URL) throws {
-        try fm.linkItem(at: srcURL, to: dstURL)
+        try fileManager.linkItem(at: srcURL, to: dstURL)
     }
-    
+
+    @inlinable
     func destinationOfSymbolicLink(at url: URL) throws -> String {
-        try fm.destinationOfSymbolicLink(atPath: url.path)
+        try fileManager.destinationOfSymbolicLink(atPath: url.path)
     }
     
 }
@@ -230,7 +249,7 @@ public extension URLFileManager {
     
     func fileExistance(at url: URL) -> FileExistance {
         var isDirectory: ObjCBool = false
-        let fileExists = fm.fileExists(atPath: url.path, isDirectory: &isDirectory)
+        let fileExists = fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory)
         if fileExists {
             if isDirectory.boolValue {
                 return .directory
@@ -241,59 +260,70 @@ public extension URLFileManager {
             return .none
         }
     }
-    
+
+    @inlinable
     func isReadableFile(at url: URL) -> Bool {
-        fm.isReadableFile(atPath: url.path)
+        fileManager.isReadableFile(atPath: url.path)
     }
-    
+
+    @inlinable
     func isWritableFile(at url: URL) -> Bool {
-        fm.isWritableFile(atPath: url.path)
+        fileManager.isWritableFile(atPath: url.path)
     }
-    
+
+    @inlinable
     func isExecutableFile(at url: URL) -> Bool {
-        fm.isExecutableFile(atPath: url.path)
+        fileManager.isExecutableFile(atPath: url.path)
     }
-    
+
+    @inlinable
     func isDeletableFile(at url: URL) -> Bool {
-        fm.isDeletableFile(atPath: url.path)
+        fileManager.isDeletableFile(atPath: url.path)
     }
     
 }
 
 // MARK: Getting and Setting Attributes
 public extension URLFileManager {
-    
+
+    @inlinable
     func componentsToDisplay(forURL url: URL) -> [String]? {
-        fm.componentsToDisplay(forPath: url.path)
+        fileManager.componentsToDisplay(forPath: url.path)
     }
-    
+
+    @inlinable
     func displayName(atURL url: URL) -> String {
-        fm.displayName(atPath: url.path)
+        fileManager.displayName(atPath: url.path)
     }
-    
+
+    @inlinable
     func attributesOfItem(atURL url: URL) throws -> [FileAttributeKey : Any] {
-        try fm.attributesOfItem(atPath: url.path)
+        try fileManager.attributesOfItem(atPath: url.path)
     }
-    
+
+    @inlinable
     func attributesOfFileSystem(forURL url: URL) throws -> [FileAttributeKey : Any] {
-        try fm.attributesOfFileSystem(forPath: url.path)
+        try fileManager.attributesOfFileSystem(forPath: url.path)
     }
-    
+
+    @inlinable
     func setAttributes(_ attributes: [FileAttributeKey : Any], ofItemAtURL url: URL) throws {
-        try fm.setAttributes(attributes, ofItemAtPath: url.path)
+        try fileManager.setAttributes(attributes, ofItemAtPath: url.path)
     }
     
 }
 
 // MARK: Getting and Comparing File Contents
 public extension URLFileManager {
-    
+
+    @inlinable
     func contents(atURL url: URL) -> Data? {
-        fm.contents(atPath: url.path)
+        fileManager.contents(atPath: url.path)
     }
-    
+
+    @inlinable
     func contentsEqual(atURL url1: URL, andURL url2: URL) -> Bool {
-        fm.contentsEqual(atPath: url1.path, andPath: url2.path)
+        fileManager.contentsEqual(atPath: url1.path, andPath: url2.path)
     }
     
 }
@@ -302,16 +332,18 @@ public extension URLFileManager {
 public extension URLFileManager {
     
     typealias URLRelationship = FileManager.URLRelationship
-    
+
+    @inlinable
     func getRelationship(ofDirectoryAt directoryURL: URL, toItemAt otherURL: URL) throws -> URLRelationship {
         var re = URLRelationship.other
-        try fm.getRelationship(&re, ofDirectoryAt: directoryURL, toItemAt: otherURL)
+        try fileManager.getRelationship(&re, ofDirectoryAt: directoryURL, toItemAt: otherURL)
         return re
     }
-    
+
+    @inlinable
     func getRelationship(of directory: FileManager.SearchPathDirectory, in domainMask: FileManager.SearchPathDomainMask, toItemAt url: URL) throws -> URLRelationship {
         var re = URLRelationship.other
-        try fm.getRelationship(&re, of: directory, in: domainMask, toItemAt: url)
+        try fileManager.getRelationship(&re, of: directory, in: domainMask, toItemAt: url)
         return re
     }
     
@@ -319,39 +351,44 @@ public extension URLFileManager {
 
 // MARK: Converting File Paths to Strings
 public extension URLFileManager {
-    
+
+    @inlinable
     func fileSystemRepresentation(withURL url: URL) -> UnsafePointer<Int8> {
-        fm.fileSystemRepresentation(withPath: url.path)
+        fileManager.fileSystemRepresentation(withPath: url.path)
     }
-    
+
+    @inlinable
     func string(withFileSystemRepresentation str: UnsafePointer<Int8>, length len: Int) -> String {
-        fm.string(withFileSystemRepresentation: str, length: len)
+        fileManager.string(withFileSystemRepresentation: str, length: len)
     }
     
 }
 
 // MARK: Managing the Current Directory
 public extension URLFileManager {
-    
+
+    @inlinable
     func changeCurrentDirectory(_ url: URL) -> Bool {
-        fm.changeCurrentDirectoryPath(url.path)
+        fileManager.changeCurrentDirectoryPath(url.path)
     }
-    
+
+    @inlinable
     var currentDirectory: URL {
-        .init(fileURLWithPath: fm.currentDirectoryPath)
+        .init(fileURLWithPath: fileManager.currentDirectoryPath)
     }
     
 }
 
 #if os(macOS)
 // MARK: Unmounting Volumes
-@available(OSX 10.11, *)
+@available(macOS 10.11, *)
 public extension URLFileManager {
     
     typealias UnmountOptions = FileManager.UnmountOptions
-    
+
+    @inlinable
     func unmountVolume(at url: URL, options mask: UnmountOptions = [], completionHandler: @escaping (Error?) -> Void) {
-        fm.unmountVolume(at: url, options: mask, completionHandler: completionHandler)
+        fileManager.unmountVolume(at: url, options: mask, completionHandler: completionHandler)
     }
     
 }
