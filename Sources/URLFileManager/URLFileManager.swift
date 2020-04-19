@@ -41,23 +41,20 @@ public extension URLFileManager {
 // MARK: Locating System Directories
 public extension URLFileManager {
 
-    typealias SearchPathDirectory = FileManager.SearchPathDirectory
-
-    typealias SearchPathDomainMask = FileManager.SearchPathDomainMask
-
     @inlinable
-    func url(for directory: SearchPathDirectory, in domain: SearchPathDomainMask, appropriateFor url: URL?, create shouldCreate: Bool) throws -> URL {
+    func url(for directory: FileManager.SearchPathDirectory, in domain: FileManager.SearchPathDomainMask, appropriateFor url: URL?, create shouldCreate: Bool) throws -> URL {
         try fileManager.url(for: directory, in: domain, appropriateFor: url, create: shouldCreate)
     }
 
     @inlinable
-    func urls(for directory: SearchPathDirectory, in domainMask: SearchPathDomainMask) -> [URL] {
+    func urls(for directory: FileManager.SearchPathDirectory, in domainMask: FileManager.SearchPathDomainMask) -> [URL] {
         fileManager.urls(for: directory, in: domainMask)
     }
-    
-//    func NSSearchPathForDirectoriesInDomains(_ directory: FileManager.SearchPathDirectory, _ domainMask: FileManager.SearchPathDomainMask, _ expandTilde: Bool) -> [String]
-    
-//    func NSOpenStepRootDirectory() -> String
+
+    @inlinable
+    func nsOpenStepRootDirectory() -> URL {
+        URL(fileURLWithPath: NSOpenStepRootDirectory(), isDirectory: true)
+    }
     
     
 }
@@ -76,25 +73,21 @@ public extension URLFileManager {
 
 // MARK: Discovering Directory Contents
 public extension URLFileManager {
-    
-    typealias DirectoryEnumerationOptions = FileManager.DirectoryEnumerationOptions
-    
-    typealias DirectoryEnumerator = FileManager.DirectoryEnumerator
-    
-    typealias VolumeEnumerationOptions = FileManager.VolumeEnumerationOptions
 
     @inlinable
-    func contentsOfDirectory(at url: URL, includingPropertiesForKeys keys: [URLResourceKey]? = nil, options mask: DirectoryEnumerationOptions = []) throws -> [URL] {
-        try fileManager.contentsOfDirectory(at: url, includingPropertiesForKeys: keys, options: mask)
+    func contentsOfDirectory(at url: URL, includingPropertiesForKeys keys: [URLResourceKey]? = nil, options mask: FileManager.DirectoryEnumerationOptions = []) throws -> [URL] {
+        try withAutoreleasepool {
+            try fileManager.contentsOfDirectory(at: url, includingPropertiesForKeys: keys, options: mask)
+        }
     }
     
     @inlinable
-    func enumerator(at url: URL, includingPropertiesForKeys keys: [URLResourceKey]? = nil, options mask: DirectoryEnumerationOptions = [], errorHandler handler: ((URL, Error) -> Bool)? = nil) -> DirectoryEnumerator? {
+    func enumerator(at url: URL, includingPropertiesForKeys keys: [URLResourceKey]? = nil, options mask: FileManager.DirectoryEnumerationOptions = [], errorHandler handler: ((URL, Error) -> Bool)? = nil) -> FileManager.DirectoryEnumerator? {
         fileManager.enumerator(at: url, includingPropertiesForKeys: keys, options: mask, errorHandler: handler)
     }
 
     @inlinable
-    func mountedVolumeURLs(includingResourceValuesForKeys propertyKeys: [URLResourceKey]? = nil, options: VolumeEnumerationOptions = []) -> [URL]? {
+    func mountedVolumeURLs(includingResourceValuesForKeys propertyKeys: [URLResourceKey]? = nil, options: FileManager.VolumeEnumerationOptions = []) -> [URL]? {
         fileManager.mountedVolumeURLs(includingResourceValuesForKeys: propertyKeys, options: options)
     }
 
@@ -135,10 +128,9 @@ public extension URLFileManager {
 
 // MARK: Replacing Items
 public extension URLFileManager {
-    
-    typealias ItemReplacementOptions = FileManager.ItemReplacementOptions
-    
-    func replaceItemAt(_ originalItemURL: URL, withItemAt newItemURL: URL, backupItemName: String? = nil, options: ItemReplacementOptions = []) throws -> URL? {
+
+    @inlinable
+    func replaceItemAt(_ originalItemURL: URL, withItemAt newItemURL: URL, backupItemName: String? = nil, options: FileManager.ItemReplacementOptions = []) throws -> URL? {
         try fileManager.replaceItemAt(originalItemURL, withItemAt: newItemURL, backupItemName: backupItemName, options: options)
     }
     
@@ -318,7 +310,9 @@ public extension URLFileManager {
 
     @inlinable
     func contents(atURL url: URL) -> Data? {
-        fileManager.contents(atPath: url.path)
+        withAutoreleasepool {
+            fileManager.contents(atPath: url.path)
+        }
     }
 
     @inlinable
@@ -330,19 +324,17 @@ public extension URLFileManager {
 
 // MARK: Getting the Relationship Between Items
 public extension URLFileManager {
-    
-    typealias URLRelationship = FileManager.URLRelationship
 
     @inlinable
-    func getRelationship(ofDirectoryAt directoryURL: URL, toItemAt otherURL: URL) throws -> URLRelationship {
-        var re = URLRelationship.other
+    func getRelationship(ofDirectoryAt directoryURL: URL, toItemAt otherURL: URL) throws -> FileManager.URLRelationship {
+        var re = FileManager.URLRelationship.other
         try fileManager.getRelationship(&re, ofDirectoryAt: directoryURL, toItemAt: otherURL)
         return re
     }
 
     @inlinable
-    func getRelationship(of directory: FileManager.SearchPathDirectory, in domainMask: FileManager.SearchPathDomainMask, toItemAt url: URL) throws -> URLRelationship {
-        var re = URLRelationship.other
+    func getRelationship(of directory: FileManager.SearchPathDirectory, in domainMask: FileManager.SearchPathDomainMask, toItemAt url: URL) throws -> FileManager.URLRelationship {
+        var re = FileManager.URLRelationship.other
         try fileManager.getRelationship(&re, of: directory, in: domainMask, toItemAt: url)
         return re
     }
@@ -383,13 +375,21 @@ public extension URLFileManager {
 // MARK: Unmounting Volumes
 @available(macOS 10.11, *)
 public extension URLFileManager {
-    
-    typealias UnmountOptions = FileManager.UnmountOptions
 
     @inlinable
-    func unmountVolume(at url: URL, options mask: UnmountOptions = [], completionHandler: @escaping (Error?) -> Void) {
+    func unmountVolume(at url: URL, options mask: FileManager.UnmountOptions = [], completionHandler: @escaping (Error?) -> Void) {
         fileManager.unmountVolume(at: url, options: mask, completionHandler: completionHandler)
     }
     
 }
 #endif
+
+@inline(__always)
+@inlinable
+func withAutoreleasepool<Result>(invoking body: () throws -> Result) rethrows -> Result {
+    #if !canImport(Darwin)
+    return try body()
+    #else
+    return try autoreleasepool(invoking: body)
+    #endif
+}
