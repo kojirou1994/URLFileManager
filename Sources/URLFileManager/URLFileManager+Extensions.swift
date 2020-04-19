@@ -108,3 +108,41 @@ extension URLFileManager {
     }
     
 }
+
+// MARK: BATCH WORKING
+extension URLFileManager {
+
+    private static let keys: Set<URLResourceKey> = [.isDirectoryKey, .isRegularFileKey, .isSymbolicLinkKey]
+
+    private static let keysArray = Array(keys)
+
+    /// symbolic is treat as normal file
+    public func forEachContent(in url: URL, handleFile: Bool = true, handleDirectory: Bool = true,
+                               body: (URL) throws -> Void) rethrows -> Bool {
+        guard let values = try? url.resourceValues(forKeys: Self.keys) else {
+            return false
+        }
+        if (values.isRegularFile! || values.isSymbolicLink!) && handleFile {
+            try body(url)
+        } else if values.isDirectory! {
+            guard let enumerator = self.enumerator(at: url, includingPropertiesForKeys: Self.keysArray) else {
+                return false
+            }
+            for case let content as URL in enumerator {
+                guard let contentValues = try? content.resourceValues(forKeys: Self.keys) else {
+                    continue
+                }
+                if ((contentValues.isRegularFile! || contentValues.isSymbolicLink!) && handleFile) || (contentValues.isDirectory! && handleDirectory) {
+                    try body(content)
+                }
+            }
+            if handleDirectory {
+                try body(url)
+            }
+        } else {
+            return false
+        }
+        return true
+    }
+
+}
