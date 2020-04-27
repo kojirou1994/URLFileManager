@@ -1,15 +1,18 @@
 import Foundation
 
-public extension URL {
+extension URL {
 
-    @inlinable
-    var lastPathComponentWithoutExtension: String {
-        deletingPathExtension().lastPathComponent
-    }
+  @inlinable
+  public var lastPathComponentWithoutExtension: String {
+    deletingPathExtension().lastPathComponent
+  }
 
-    @inlinable
-    func replacingPathExtension(with ext: String) -> URL {
-        deletingPathExtension().appendingPathExtension(ext)
-    }
-    
+  @inlinable
+  public func replacingPathExtension(with ext: String) -> URL {
+    var new = self
+    new.deletePathExtension()
+    new.appendPathExtension(ext)
+    return new
+  }
+
 }
