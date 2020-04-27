@@ -2,147 +2,153 @@ import Foundation
 
 // MARK: searchEmptyDirectories
 extension URLFileManager {
-    private enum Parsed {
-        case empty
-        case onlyFiles
-        case onlyDirs([URL])
-        case fileAndDirs([URL])
+  private enum ParsedDirectoryContent {
+    case empty
+    case onlyFiles
+    case onlyDirs(dirs: [URL])
+    case fileAndDirs(dirs: [URL])
+  }
+
+  private func parseDirectory(at url: URL, ignoreHiddenFile: Bool) throws -> ParsedDirectoryContent
+  {
+    let allContents = try contentsOfDirectory(
+      at: url,
+      includingPropertiesForKeys: [.isDirectoryKey],
+      options: ignoreHiddenFile ? [.skipsHiddenFiles] : [])
+    var dirs = [URL]()
+    var hasFile = false
+    for url in allContents {
+      if try url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory! {
+        dirs.append(url)
+      } else {
+        hasFile = true
+      }
     }
-    
-    private func parseDirectory(at url: URL) throws -> Parsed {
-        let e = try contentsOfDirectory(at: url,
-                                    includingPropertiesForKeys: [.isDirectoryKey],
-                                    options: [.skipsSubdirectoryDescendants])
-        var dirs = [URL]()
-        var hasFile = false
-        for url in e {
-            if try url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory! {
-                dirs.append(url)
-            } else if url.lastPathComponent != ".DS_Store" {
-                hasFile = true
-            }
-        }
-        if dirs.isEmpty {
-            if hasFile {
-                return .onlyFiles
-            } else {
-                return .empty
-            }
+    if dirs.isEmpty {
+      return hasFile ? .onlyFiles : .empty
+    } else {
+      return hasFile ? .fileAndDirs(dirs: dirs) : .onlyDirs(dirs: dirs)
+    }
+  }
+
+  public struct EmptyDirectoryResult {
+    public let subDirectories: [URL]
+    public let isEmptyRootDir: Bool
+  }
+
+  public func searchEmptyDirectories(in url: URL, ignoreHiddenFile: Bool) throws
+    -> EmptyDirectoryResult
+  {
+    var emptyDirectories = [URL]()
+    switch try parseDirectory(at: url, ignoreHiddenFile: ignoreHiddenFile) {
+    case .empty:
+      return .init(subDirectories: [], isEmptyRootDir: true)
+    case .onlyFiles:
+      break
+    case .onlyDirs(let dirs):
+      var allEmpty = true
+      for dir in dirs {
+        let subResult = try searchEmptyDirectories(in: dir, ignoreHiddenFile: ignoreHiddenFile)
+        if subResult.isEmptyRootDir {
+          emptyDirectories.append(dir)
         } else {
-            if hasFile {
-                return .fileAndDirs(dirs)
-            } else {
-                return .onlyDirs(dirs)
-            }
+          allEmpty = false
+          emptyDirectories.append(contentsOf: subResult.subDirectories)
         }
-    }
-    
-    public enum EmptyDirectoryResult {
-        case selfEmpty
-        case subpaths([URL])
-    }
-    
-    public func searchEmptyDirectories(in url: URL) throws -> EmptyDirectoryResult {
-        var r = [URL]()
-        switch try parseDirectory(at: url) {
-        case .empty:
-            return .selfEmpty
-        case .onlyFiles:
-            break
-        case .onlyDirs(let dirs):
-            var allEmpty = false
-            for dir in dirs {
-                let sub = try searchEmptyDirectories(in: dir)
-                switch sub {
-                case .selfEmpty:
-                    r.append(dir)
-                case .subpaths(let v):
-                    allEmpty = false
-                    r.append(contentsOf: v)
-                }
-            }
-            if allEmpty {
-                return .selfEmpty
-            }
-        case .fileAndDirs(let dirs):
-            for dir in dirs {
-                let sub = try searchEmptyDirectories(in: dir)
-                switch sub {
-                case .selfEmpty:
-                    r.append(dir)
-                case .subpaths(let v):
-                    r.append(contentsOf: v)
-                }
-            }
+      }
+      if allEmpty {
+        return .init(subDirectories: dirs, isEmptyRootDir: true)
+      }
+    case .fileAndDirs(let dirs):
+      for dir in dirs {
+        let subResult = try searchEmptyDirectories(in: dir, ignoreHiddenFile: ignoreHiddenFile)
+        if subResult.isEmptyRootDir {
+          emptyDirectories.append(dir)
+        } else {
+          emptyDirectories.append(contentsOf: subResult.subDirectories)
         }
-        return .subpaths(r)
+      }
     }
+    return .init(subDirectories: emptyDirectories, isEmptyRootDir: false)
+  }
 }
 
 // MARK: Safe Move Item
 extension URLFileManager {
-    
-    public func moveAndAutoRenameItem(at url: URL, to dstURL: URL,
-                                      filenameGenerator: ((String, Int) -> String)? = nil) throws -> URL {
-        let dstURL = makeUniqueFileURL(dstURL, filenameGenerator: filenameGenerator)
-        
-        try moveItem(at: url, to: dstURL)
-        return dstURL
+
+  public func moveAndAutoRenameItem(
+    at url: URL, to dstURL: URL,
+    filenameGenerator: ((String, Int) -> String)? = nil
+  ) throws -> URL {
+    let dstURL = makeUniqueFileURL(dstURL, filenameGenerator: filenameGenerator)
+
+    try moveItem(at: url, to: dstURL)
+    return dstURL
+  }
+
+  public func makeUniqueFileURL(
+    _ url: URL,
+    filenameGenerator: ((String, Int) -> String)? = nil
+  ) -> URL {
+    var dstURL = url
+    let ext = url.pathExtension
+    let body = url.deletingPathExtension().lastPathComponent
+    var suffix = 2
+    let baseURL = url.deletingLastPathComponent()
+
+    while fileExistance(at: dstURL).exists {
+      dstURL =
+        baseURL
+        .appendingPathComponent(filenameGenerator?(body, suffix) ?? "\(body)\(suffix)")
+        .appendingPathExtension(ext)
+      suffix += 1
     }
-    
-    public func makeUniqueFileURL(_ url: URL,
-                             filenameGenerator: ((String, Int) -> String)? = nil) -> URL {
-        var dstURL = url
-        let ext = url.pathExtension
-        let body = url.deletingPathExtension().lastPathComponent
-        var suffix = 2
-        let baseURL = url.deletingLastPathComponent()
-        
-        while fileExistance(at: dstURL).exists {
-            dstURL = baseURL
-                .appendingPathComponent(filenameGenerator?(body, suffix) ?? "\(body)\(suffix)")
-                .appendingPathExtension(ext)
-            suffix += 1
-        }
-        return dstURL
-    }
-    
+    return dstURL
+  }
+
 }
 
 // MARK: BATCH WORKING
 extension URLFileManager {
 
-    private static let keys: Set<URLResourceKey> = [.isDirectoryKey, .isRegularFileKey, .isSymbolicLinkKey]
+  private static let keys: Set<URLResourceKey> = [
+    .isDirectoryKey, .isRegularFileKey, .isSymbolicLinkKey,
+  ]
 
-    private static let keysArray = Array(keys)
+  private static let keysArray = Array(keys)
 
-    /// symbolic is treat as normal file
-    public func forEachContent(in url: URL, handleFile: Bool = true, handleDirectory: Bool = true,
-                               body: (URL) throws -> Void) rethrows -> Bool {
-        guard let values = try? url.resourceValues(forKeys: Self.keys) else {
-            return false
-        }
-        if (values.isRegularFile! || values.isSymbolicLink!) && handleFile {
-            try body(url)
-        } else if values.isDirectory! {
-            guard let enumerator = self.enumerator(at: url, includingPropertiesForKeys: Self.keysArray) else {
-                return false
-            }
-            for case let content as URL in enumerator {
-                guard let contentValues = try? content.resourceValues(forKeys: Self.keys) else {
-                    continue
-                }
-                if ((contentValues.isRegularFile! || contentValues.isSymbolicLink!) && handleFile) || (contentValues.isDirectory! && handleDirectory) {
-                    try body(content)
-                }
-            }
-            if handleDirectory {
-                try body(url)
-            }
-        } else {
-            return false
-        }
-        return true
+  /// symbolic is treat as normal file
+  public func forEachContent(
+    in url: URL, handleFile: Bool = true, handleDirectory: Bool = true,
+    body: (URL) throws -> Void
+  ) rethrows -> Bool {
+    guard let values = try? url.resourceValues(forKeys: Self.keys) else {
+      return false
     }
+    if (values.isRegularFile! || values.isSymbolicLink!) && handleFile {
+      try body(url)
+    } else if values.isDirectory! {
+      guard let enumerator = self.enumerator(at: url, includingPropertiesForKeys: Self.keysArray)
+      else {
+        return false
+      }
+      for case let content as URL in enumerator {
+        guard let contentValues = try? content.resourceValues(forKeys: Self.keys) else {
+          continue
+        }
+        if ((contentValues.isRegularFile! || contentValues.isSymbolicLink!) && handleFile)
+          || (contentValues.isDirectory! && handleDirectory)
+        {
+          try body(content)
+        }
+      }
+      if handleDirectory {
+        try body(url)
+      }
+    } else {
+      return false
+    }
+    return true
+  }
 
 }
