@@ -56,10 +56,12 @@ extension URLFileManager {
     fileManager.urls(for: directory, in: domainMask)
   }
 
+  #if canImport(Darwin)
   @inlinable
   public func nsOpenStepRootDirectory() -> URL {
     URL(fileURLWithPath: NSOpenStepRootDirectory(), isDirectory: true)
   }
+  #endif
 
 }
 
