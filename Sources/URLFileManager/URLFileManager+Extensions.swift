@@ -120,6 +120,7 @@ extension URLFileManager {
   /// symbolic is treat as normal file
   public func forEachContent(
     in url: URL, handleFile: Bool = true, handleDirectory: Bool = true,
+    skipHiddenFiles: Bool = false,
     body: (URL) throws -> Void
   ) rethrows -> Bool {
     guard let values = try? url.resourceValues(forKeys: Self.keys) else {
@@ -128,7 +129,9 @@ extension URLFileManager {
     if (values.isRegularFile! || values.isSymbolicLink!) && handleFile {
       try body(url)
     } else if values.isDirectory! {
-      guard let enumerator = self.enumerator(at: url, includingPropertiesForKeys: Self.keysArray)
+      guard let enumerator = self.enumerator(at: url,
+                                             includingPropertiesForKeys: Self.keysArray,
+                                             options: skipHiddenFiles ? .skipsHiddenFiles : [])
       else {
         return false
       }

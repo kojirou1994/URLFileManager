@@ -17,17 +17,17 @@ public final class URLFileManager {
 extension URLFileManager {
 
   #if os(macOS)
-    @inlinable
-    @available(macOS 10.12, *)
-    public var homeDirectoryForCurrentUser: URL {
-      fileManager.homeDirectoryForCurrentUser
-    }
+  @inlinable
+  @available(macOS 10.12, *)
+  public var homeDirectoryForCurrentUser: URL {
+    fileManager.homeDirectoryForCurrentUser
+  }
 
-    @inlinable
-    @available(macOS 10.12, *)
-    public func homeDirectory(forUser userName: String) -> URL? {
-      fileManager.homeDirectory(forUser: userName)
-    }
+  @inlinable
+  @available(macOS 10.12, *)
+  public func homeDirectory(forUser userName: String) -> URL? {
+    fileManager.homeDirectory(forUser: userName)
+  }
   #endif
 
   @inlinable
@@ -67,15 +67,15 @@ extension URLFileManager {
 
 // MARK: Locating Application Group Container Directories
 #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-  extension URLFileManager {
+extension URLFileManager {
 
-    @inlinable
-    public func containerURL(forSecurityApplicationGroupIdentifier groupIdentifier: String) -> URL?
-    {
-      fileManager.containerURL(forSecurityApplicationGroupIdentifier: groupIdentifier)
-    }
-
+  @inlinable
+  public func containerURL(forSecurityApplicationGroupIdentifier groupIdentifier: String) -> URL?
+  {
+    fileManager.containerURL(forSecurityApplicationGroupIdentifier: groupIdentifier)
   }
+
+}
 #endif
 
 // MARK: Discovering Directory Contents
@@ -141,11 +141,15 @@ extension URLFileManager {
   }
 
   #if os(macOS) || os(iOS)
-    @inlinable
-    @available(iOS 11.0, *)
-    public func trashItem(at url: URL) throws {
-      try fileManager.trashItem(at: url, resultingItemURL: nil)
+  @inlinable @discardableResult
+  @available(iOS 11.0, *)
+  public func trashItem(at url: URL) throws -> URL {
+    try autoreleasepool {
+      var resultingItemURL: NSURL!
+      try fileManager.trashItem(at: url, resultingItemURL: &resultingItemURL)
+      return resultingItemURL as URL
     }
+  }
   #endif
 
 }
@@ -181,62 +185,62 @@ extension URLFileManager {
 
 // MARK: Managing iCloud-Based Items
 #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-  extension URLFileManager {
+extension URLFileManager {
 
-    @inlinable
-    public var ubiquityIdentityToken: (NSCoding & NSCopying & NSObjectProtocol)? {
-      fileManager.ubiquityIdentityToken
-    }
-
-    @inlinable
-    public func url(forUbiquityContainerIdentifier containerIdentifier: String?) -> URL? {
-      fileManager.url(forUbiquityContainerIdentifier: containerIdentifier)
-    }
-
-    @inlinable
-    public func isUbiquitousItem(at url: URL) -> Bool {
-      fileManager.isUbiquitousItem(at: url)
-    }
-
-    @inlinable
-    public func setUbiquitous(_ flag: Bool, itemAt url: URL, destinationURL: URL) throws {
-      try fileManager.setUbiquitous(flag, itemAt: url, destinationURL: destinationURL)
-    }
-
-    @inlinable
-    public func startDownloadingUbiquitousItem(at url: URL) throws {
-      try fileManager.startDownloadingUbiquitousItem(at: url)
-    }
-
-    @inlinable
-    public func evictUbiquitousItem(at url: URL) throws {
-      try fileManager.evictUbiquitousItem(at: url)
-    }
-
-    @inlinable
-    public func url(
-      forPublishingUbiquitousItemAt url: URL,
-      expiration outDate: AutoreleasingUnsafeMutablePointer<NSDate?>?
-    ) throws -> URL {
-      try fileManager.url(forPublishingUbiquitousItemAt: url, expiration: outDate)
-    }
-
+  @inlinable
+  public var ubiquityIdentityToken: (NSCoding & NSCopying & NSObjectProtocol)? {
+    fileManager.ubiquityIdentityToken
   }
+
+  @inlinable
+  public func url(forUbiquityContainerIdentifier containerIdentifier: String?) -> URL? {
+    fileManager.url(forUbiquityContainerIdentifier: containerIdentifier)
+  }
+
+  @inlinable
+  public func isUbiquitousItem(at url: URL) -> Bool {
+    fileManager.isUbiquitousItem(at: url)
+  }
+
+  @inlinable
+  public func setUbiquitous(_ flag: Bool, itemAt url: URL, destinationURL: URL) throws {
+    try fileManager.setUbiquitous(flag, itemAt: url, destinationURL: destinationURL)
+  }
+
+  @inlinable
+  public func startDownloadingUbiquitousItem(at url: URL) throws {
+    try fileManager.startDownloadingUbiquitousItem(at: url)
+  }
+
+  @inlinable
+  public func evictUbiquitousItem(at url: URL) throws {
+    try fileManager.evictUbiquitousItem(at: url)
+  }
+
+  @inlinable
+  public func url(
+    forPublishingUbiquitousItemAt url: URL,
+    expiration outDate: AutoreleasingUnsafeMutablePointer<NSDate?>?
+  ) throws -> URL {
+    try fileManager.url(forPublishingUbiquitousItemAt: url, expiration: outDate)
+  }
+
+}
 #endif
 
 // MARK: Accessing File Provider Services
 extension URLFileManager {
 
   #if os(macOS) || os(iOS)
-    @inlinable
-    @available(iOS 11.0, macOS 10.13, *)
-    public func getFileProviderServicesForItem(
-      at url: URL,
-      completionHandler: @escaping ([NSFileProviderServiceName: NSFileProviderService]?, Error?) ->
-        Void
-    ) {
-      fileManager.getFileProviderServicesForItem(at: url, completionHandler: completionHandler)
-    }
+  @inlinable
+  @available(iOS 11.0, macOS 10.13, *)
+  public func getFileProviderServicesForItem(
+    at url: URL,
+    completionHandler: @escaping ([NSFileProviderServiceName: NSFileProviderService]?, Error?) ->
+    Void
+  ) {
+    fileManager.getFileProviderServicesForItem(at: url, completionHandler: completionHandler)
+  }
   #endif
 
 }
@@ -414,27 +418,27 @@ extension URLFileManager {
 }
 
 #if os(macOS)
-  // MARK: Unmounting Volumes
-  @available(macOS 10.11, *)
-  extension URLFileManager {
+// MARK: Unmounting Volumes
+@available(macOS 10.11, *)
+extension URLFileManager {
 
-    @inlinable
-    public func unmountVolume(
-      at url: URL, options mask: FileManager.UnmountOptions = [],
-      completionHandler: @escaping (Error?) -> Void
-    ) {
-      fileManager.unmountVolume(at: url, options: mask, completionHandler: completionHandler)
-    }
-
+  @inlinable
+  public func unmountVolume(
+    at url: URL, options mask: FileManager.UnmountOptions = [],
+    completionHandler: @escaping (Error?) -> Void
+  ) {
+    fileManager.unmountVolume(at: url, options: mask, completionHandler: completionHandler)
   }
+
+}
 #endif
 
 @inline(__always)
 @inlinable
 func withAutoreleasepool<Result>(invoking body: () throws -> Result) rethrows -> Result {
   #if !canImport(Darwin)
-    return try body()
+  return try body()
   #else
-    return try autoreleasepool(invoking: body)
+  return try autoreleasepool(invoking: body)
   #endif
 }
