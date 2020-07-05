@@ -129,19 +129,20 @@ extension URLFileManager {
     if (values.isRegularFile! || values.isSymbolicLink!) && handleFile {
       try body(url)
     } else if values.isDirectory! {
-      guard let enumerator = self.enumerator(at: url,
-                                             includingPropertiesForKeys: Self.keysArray,
-                                             options: skipHiddenFiles ? .skipsHiddenFiles : [])
-      else {
+      guard let enumerator = self.enumerator(
+              at: url,
+              includingPropertiesForKeys: Self.keysArray,
+              options: skipHiddenFiles ? .skipsHiddenFiles : []) else {
         return false
       }
-      for case let content as URL in enumerator {
+
+      var iterator = enumerator.makeIterator()
+      while let content = withAutoreleasepool(invoking: { iterator.next() as? URL }) {
         guard let contentValues = try? content.resourceValues(forKeys: Self.keys) else {
           continue
         }
         if ((contentValues.isRegularFile! || contentValues.isSymbolicLink!) && handleFile)
-          || (contentValues.isDirectory! && handleDirectory)
-        {
+          || (contentValues.isDirectory! && handleDirectory) {
           try body(content)
         }
       }
