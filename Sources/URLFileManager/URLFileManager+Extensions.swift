@@ -127,7 +127,7 @@ extension URLFileManager {
       return false
     }
     if (values.isRegularFile! || values.isSymbolicLink!) && handleFile {
-      try body(url)
+      try withAutoreleasepool { try body(url) }
     } else if values.isDirectory! {
       guard let enumerator = self.enumerator(
               at: url,
@@ -143,11 +143,11 @@ extension URLFileManager {
         }
         if ((contentValues.isRegularFile! || contentValues.isSymbolicLink!) && handleFile)
           || (contentValues.isDirectory! && handleDirectory) {
-          try body(content)
+          try withAutoreleasepool { try body(content) }
         }
       }
       if handleDirectory {
-        try body(url)
+        try withAutoreleasepool { try body(url) }
       }
     } else {
       return false
