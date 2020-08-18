@@ -3,5 +3,6 @@ import XCTest
 import URLFileManagerTests
 
 var tests = [XCTestCaseEntry]()
-tests += URLFileManagerTests.allTests()
+tests += URLFileManagerTests.__allTests()
+
 XCTMain(tests)
