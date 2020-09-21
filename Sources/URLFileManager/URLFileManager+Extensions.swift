@@ -136,7 +136,11 @@ extension URLFileManager {
         return false
       }
 
+      #if canImport(Darwin)
       var iterator = enumerator.makeIterator()
+      #else
+      let iterator = enumerator.makeIterator()
+      #endif
       while let content = withAutoreleasepool(invoking: { iterator.next() as? URL }) {
         guard let contentValues = try? content.resourceValues(forKeys: Self.keys) else {
           continue
