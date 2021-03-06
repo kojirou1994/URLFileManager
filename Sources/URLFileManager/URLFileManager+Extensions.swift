@@ -160,3 +160,21 @@ extension URLFileManager {
   }
 
 }
+
+// MARK: Delete
+extension URLFileManager {
+
+  @available(iOS 11.0, *)
+  public func deleteItem(at url: URL, trashIfAvailable: Bool) throws {
+    #if os(macOS) || os(iOS)
+    if trashIfAvailable {
+      try trashItem(at: url)
+    } else {
+      try removeItem(at: url)
+    }
+    #else
+    try removeItem(at: url)
+    #endif
+  }
+
+}
