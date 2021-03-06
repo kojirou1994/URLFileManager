@@ -161,7 +161,7 @@ extension URLFileManager {
 
 }
 
-// MARK: Delete
+// MARK: Convenience functions
 extension URLFileManager {
 
   @available(iOS 11.0, *)
@@ -175,6 +175,16 @@ extension URLFileManager {
     #else
     try removeItem(at: url)
     #endif
+  }
+
+  public func copyItem(at srcURL: URL, toDirectory directoryURL: URL) throws {
+    let dstURL = directoryURL.appendingPathComponent(srcURL.lastPathComponent)
+    try fileManager.copyItem(at: srcURL, to: dstURL)
+  }
+
+  public func moveItem(at srcURL: URL, toDirectory directoryURL: URL) throws {
+    let dstURL = directoryURL.appendingPathComponent(srcURL.lastPathComponent)
+    try fileManager.moveItem(at: srcURL, to: dstURL)
   }
 
 }
