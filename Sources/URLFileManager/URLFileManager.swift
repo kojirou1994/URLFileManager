@@ -15,7 +15,7 @@ public final class URLFileManager {
 // MARK: Accessing User Directories
 public extension URLFileManager {
 
-  #if os(macOS)
+  #if !(os(iOS) || os(tvOS) || os(watchOS))
   @available(macOS 10.12, *)
   var homeDirectoryForCurrentUser: URL {
     fileManager.homeDirectoryForCurrentUser
